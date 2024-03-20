@@ -1,0 +1,134 @@
+<?php
+// Include header, session, and necessary configurations
+include('header.php');
+include('session.php');
+
+// Start HTML body
+?>
+<body>
+    
+    <?php
+    // Include the navigation bar
+    include('navbar.php');
+    ?>
+
+    <div class="container-fluid">
+        <div class="row-fluid">
+            <?php
+            // Include the sidebar
+            include('sidebar.php');
+            ?>
+
+            <div class="span9" id="content">
+                <div class="row-fluid">
+                    <!-- Alert for required details -->
+                    <div class="alert alert-success"><i class="icon-info-sign"></i> Please Fill in required details</div>
+
+                    <div id="block_bg" class="block">
+                        <div class="navbar navbar-inner block-header">
+                            <div id="" class="muted pull-left"><i class="icon-user"></i>&nbsp;System user change Password</div>
+                        </div>
+
+                        <div class="block-content collapse in">
+                            <div class="span12">
+                                <?php
+                                // Retrieve user information from the database
+                                $query = mysqli_query($conn, "SELECT * FROM admin WHERE admin_id = '$session_id'") or die(mysqli_error());
+                                $row = mysqli_fetch_array($query);
+                                ?>
+<a id="return" data-placement="top" class="btn btn-success" title="Click to Return" href="dashboard.php"><i class="icon-arrow-left"></i> Back</a></p>		
+                                <div class="container-fluid">
+                                    <div class="row-fluid">
+                                        <!-- Form for changing password -->
+                                        <form method="post" id="change_password" class="form-horizontal">
+                                            <div class="control-group">
+                                                <label class="control-label" for="inputEmail">Current Password</label>
+                                                <div class="controls">
+                                                    <input type="hidden" id="password" name="password" value="<?php echo $row['password']; ?>"  placeholder="Current Password">
+                                                    <input type="password" id="current_password" name="current_password"  placeholder="Current Password" required/>
+                                                </div>
+                                            </div>
+
+                                            <div class="control-group">
+                                                <label class="control-label" for="inputPassword">New Password</label>
+                                                <div class="controls">
+                                                    <input type="password" id="new_password" name="new_password" placeholder="New Password">
+                                                </div>
+                                            </div>
+
+                                            <div class="control-group">
+                                                <label class="control-label" for="inputPassword">Re-type Password</label>
+                                                <div class="controls">
+                                                    <input type="password" id="retype_password" name="retype_password" placeholder="Re-type Password" required/>
+                                                </div>
+                                            </div>
+
+                                            <div class="control-group">
+                                                <div class="controls">
+                                                    <button type="submit" class="btn btn-info"><i class="icon-save"></i> Save</button>
+                                                </div>
+                                            </div>
+                                        </form>
+
+                                        <!-- PHP and JavaScript for form submission -->
+                                        <?php
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $current_password = mysqli_real_escape_string($conn, $_POST['current_password']);
+    $new_password = mysqli_real_escape_string($conn, $_POST['new_password']);
+    $retype_password = mysqli_real_escape_string($conn, $_POST['retype_password']);
+
+    // Password complexity requirements
+    $uppercase = preg_match('@[A-Z]@', $new_password);
+    $lowercase = preg_match('@[a-z]@', $new_password);
+    $number    = preg_match('@[0-9]@', $new_password);
+    $specialChars = preg_match('@[^\w]@', $new_password);
+
+    if (!$uppercase || !$lowercase || !$number || !$specialChars || strlen($new_password) < 8) {
+        echo '<div class="alert alert-danger"><i class="icon-info-sign"></i> Password should be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character.</div>';
+    } else {
+        if (password_verify($current_password, $row['password'])) {
+            // Passwords match, proceed with additional checks
+            if ($new_password == $retype_password) {
+                // Passwords match, proceed with updating the password
+                $hashedNewPassword = password_hash($new_password, PASSWORD_DEFAULT);
+                mysqli_query($conn, "UPDATE admin SET password = '$hashedNewPassword' WHERE admin_id = '$session_id'")
+                    or die(mysqli_error($conn));
+
+                echo '<div class="alert alert-success"><i class="icon-info-sign"></i> Password successfully changed</div>';
+            } else {
+                // New password and retype password do not match
+                echo '<div class="alert alert-danger"><i class="icon-info-sign"></i> New password and retype password do not match</div>';
+            }
+        } else {
+            // Incorrect current password
+            echo '<div class="alert alert-danger"><i class="icon-info-sign"></i> Incorrect current password</div>';
+        }
+    }
+}
+?>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /block -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <?php
+    // Include the footer
+    include('footer.php');
+    ?>
+
+</div>
+</div>
+
+<?php
+// Include necessary scripts
+include('script.php');
+?>
+
+</body>
+</html>
